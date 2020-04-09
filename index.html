@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Filepond stylesheet -->
+  <link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet">
+
+</head>
+<body>
+
+  <input type="file" class="filepond" multiple>
+
+  <!-- Load FilePond library -->
+  <script src="https://unpkg.com/filepond/dist/filepond.js"></script>
+
+  <script>
+
+  const formElement = document.querySelector('input');
+  const pond = FilePond.create(formElement);
+
+	pond.setOptions({
+  	server: {
+    
+    }
+	});
+  
+	document.addEventListener('FilePond:addfile', e => {
+    console.log('file added', e.detail.file.file.name);
+    
+    let file = e.detail.file.file;
+    load(file);
+	});
+  
+  async function load(file) {
+	
+  	// bucket_name will be replaced with select list input
+		const body = { bucket_name: 'wc-tesseract-test', file_name: file.name, tags: 'tag1key=tag1value'};
+  
+  	let response = await putResponse('https://hrgvfofszh.execute-api.us-east-1.amazonaws.com/develop/generate-presign-url', body);
+		let url = response.upload_url;
+  	console.log(url);
+ 		putFile(url, file);
+	}
+  
+  async function putFile(url, file) {
+    let options = {
+      method: 'PUT',
+      headers:{'Content-Type':'','x-amz-tagging':'user=Tim&group=Dataworks'},
+      body: file
+    };
+
+    let response = await fetch(url, options);
+    return response;
+  }
+  
+  async function putResponse(url, body) {
+
+    let response = await fetch(`${url}`, {
+      method: 'PUT',
+      mode: 'cors',
+      body: JSON.stringify(body)
+    });
+
+    let data = await response.json();
+    console.log(data);
+    return data;
+  }
+
+  </script>
+
+</body>
+</html>
